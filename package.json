@@ -28,6 +28,11 @@
   ],
   "author": "WorldFlow AI",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WorldFlowAI/synapse-memory.git"
+  },
+  "homepage": "https://github.com/WorldFlowAI/synapse-memory#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "better-sqlite3": "^11.8.1",
