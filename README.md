@@ -20,10 +20,66 @@ Claude Code starts every session with amnesia. It doesn't know what you decided 
 
 synapse-memory records what happens in each coding session and makes it available at the start of the next one. Decisions persist. Patterns are remembered. Errors that were resolved stay resolved.
 
+**All data persists in a local SQLite file across sessions, across restarts, forever.** No cloud. No accounts. No infrastructure.
+
+### Cross-Session in Action
+
+Here's what actually happens when synapse-memory is connected:
+
 ```
-Session 1: "Let's use the repository pattern for data access."
-Session 2: "I see you established the repository pattern last session. I'll follow it."
+┌─────────────────────── SESSION 1 ───────────────────────┐
+│                                                         │
+│  > session_start({projectPath: "/myapp"})               │
+│  Session started: a1b2c3d4                              │
+│                                                         │
+│  > record_event({                                       │
+│      detail: { type: "decision",                        │
+│        title: "Use repository pattern",                 │
+│        rationale: "Clean data access separation" }      │
+│    })                                                   │
+│  Event recorded: decision                               │
+│                                                         │
+│  > promote_knowledge({                                  │
+│      title: "Use repository pattern",                   │
+│      content: "All data access through repository       │
+│               functions. Never access db directly.",     │
+│      knowledgeType: "decision"                          │
+│    })                                                   │
+│  Knowledge promoted.                                    │
+│                                                         │
+│  > session_end({                                        │
+│      summary: "Built storage layer with repo pattern"   │
+│    })                                                   │
+│  Session completed. Duration: 45 min. Events: 12.       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+  ════════════════ Time passes. New day. ════════════════
+
+┌─────────────────────── SESSION 2 ───────────────────────┐
+│                                                         │
+│  > session_start({projectPath: "/myapp"})               │
+│                                                         │
+│  Session started: e5f6g7h8                              │
+│  Project: /myapp                                        │
+│  Branch: main                                           │
+│                                                         │
+│  --- Recent Sessions ---                                │
+│  [2026-02-16] Built storage layer with repo pattern     │
+│    Decision: Use repository pattern                     │
+│    Pattern: Immutable return types with readonly         │
+│                                                         │
+│  --- Project Knowledge ---                              │
+│  [decision] Use repository pattern: All data access     │
+│    through repository functions. Never access db        │
+│    directly.                                            │
+│                                                         │
+│  Claude now knows what happened yesterday.              │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 ```
+
+This is real output. Session 2 automatically surfaces decisions, patterns, and promoted knowledge from Session 1 — with no manual context passing.
 
 ## Quick Start
 
@@ -56,20 +112,23 @@ synapse-memory provides **7 MCP tools** organized around a session lifecycle:
 
 ```
   session_start ──> record_event (repeat) ──> session_end
-       |                                           |
-       |  Returns context from past sessions       |  Computes metrics, stores summary
-       |  + promoted knowledge                     |
-       v                                           v
+       │                                           │
+       │  Returns context from past sessions       │  Computes metrics, stores summary
+       │  + promoted knowledge                     │
+       ▼                                           ▼
   ┌─────────────────────────────────────────────────────┐
-  │                    SQLite (local)                    │
+  │                  SQLite (persisted)                   │
+  │                ~/.synapse-memory/memory.db            │
   │                                                     │
   │  sessions ─── session_events ─── promoted_knowledge  │
   └─────────────────────────────────────────────────────┘
-       ^                                           ^
-       |                                           |
+       ▲                                           ▲
+       │                                           │
     recall / stats                        promote_knowledge
     get_knowledge                         (elevate to permanent)
 ```
+
+**Key insight:** `session_start` reads from the database. `session_end` writes to it. The SQLite file bridges the gap between sessions — that's the entire trick. No external service needed.
 
 ### Session Lifecycle
 
@@ -223,7 +282,7 @@ All data stays on your machine. Nothing is sent anywhere.
 
 ```
 ~/.synapse-memory/
-  memory.db          # SQLite database (WAL mode)
+  memory.db          # SQLite database (WAL mode, persists across sessions)
 ```
 
 Override the location:
@@ -257,11 +316,56 @@ synapse-memory is the local-first entry point to [Synapse](https://github.com/Wo
 | `SynapseSessionExport` | Full session export format | Ready for sync API |
 | `synapse_sync_config` | Tenant/project model | Stores connection details |
 
-**The upgrade path:**
+---
 
-1. Use synapse-memory locally (you are here)
-2. Promote valuable findings to project knowledge
-3. Connect to a Synapse instance for team-wide intelligence (coming soon)
+## Roadmap
+
+### v0.1 — Local Session Memory (current)
+
+- [x] Session lifecycle (`session_start`, `session_end`)
+- [x] Event recording with 6 event types (file ops, decisions, patterns, errors, milestones, tool calls)
+- [x] Cross-session context via `session_start` (recent sessions + decisions + patterns)
+- [x] Full-text search across sessions (`recall`)
+- [x] Session analytics by period (`stats`)
+- [x] Knowledge promotion to project-level persistence
+- [x] Schema versioning with migration system
+- [x] Synapse-aligned types for future integration
+
+### v0.2 — Smarter Context & Auto-Recording
+
+- [ ] **Auto-session hooks** — Claude Code hook integration to auto-start/end sessions without manual tool calls
+- [ ] **Intelligent context budget** — Rank and trim returned context to fit within token budgets
+- [ ] **Branch-aware recall** — Weight results by branch relevance (same branch > main > other)
+- [ ] **File importance scoring** — Track which files are most frequently read/edited and surface them proactively
+- [ ] **Duplicate detection** — Deduplicate similar decisions and patterns across sessions
+
+### v0.3 — Semantic Search & Embeddings
+
+- [ ] **Local vector search** — Embed session summaries and knowledge using a local model for semantic recall
+- [ ] **Similarity-based recall** — "Find sessions similar to what I'm doing now" using embedding similarity
+- [ ] **Smart context injection** — Automatically suggest relevant past decisions when Claude reads files it hasn't seen before
+- [ ] **Cross-project knowledge** — Share patterns and decisions across related projects
+
+### v0.4 — Team Intelligence (Synapse Sync)
+
+- [ ] **Synapse sync** — Opt-in push of promoted knowledge to a hosted Synapse instance
+- [ ] **Team knowledge base** — Query knowledge from your team's shared Synapse instance
+- [ ] **Conflict resolution** — Handle knowledge conflicts when multiple developers promote contradicting decisions
+- [ ] **Knowledge lifecycle** — Deprecate, supersede, and version knowledge over time
+
+### v0.5 — Proactive Intelligence
+
+- [ ] **Context prediction** — Predict which files and context Claude will need based on the task description and past session patterns
+- [ ] **Auto CLAUDE.md generation** — Generate and update CLAUDE.md files from promoted knowledge and discovered patterns
+- [ ] **Session templates** — Pre-load context for common task types (bug fix, feature, refactor) based on historical patterns
+- [ ] **Regression detection** — Alert when a new session re-introduces a previously resolved error
+
+### Future
+
+- [ ] **Multi-agent coordination** — Share session context between concurrent Claude Code instances working on the same project
+- [ ] **IDE integration** — VS Code / Cursor extension for visualizing session history and knowledge graph
+- [ ] **Analytics dashboard** — Web UI for exploring session history, patterns, and productivity metrics
+- [ ] **Plugin system** — Custom event types and knowledge extractors for domain-specific workflows
 
 ---
 
