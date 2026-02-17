@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.js
+*.d.ts
+*.js.map
+*.d.ts.map
+!vitest.config.ts
+coverage/
+.DS_Store
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

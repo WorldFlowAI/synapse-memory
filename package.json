@@ -1,0 +1,49 @@
+{
+  "name": "synapse-memory",
+  "version": "0.1.0",
+  "description": "MCP server for Claude Code session intelligence — persistent memory across coding sessions",
+  "type": "module",
+  "bin": {
+    "synapse-memory": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "claude-code",
+    "session-memory",
+    "ai",
+    "developer-tools"
+  ],
+  "author": "WorldFlow AI",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "better-sqlite3": "^11.8.1",
+    "zod": "^3.25.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.15.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^3.1.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
