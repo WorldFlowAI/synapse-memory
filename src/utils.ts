@@ -1,6 +1,43 @@
 import { randomUUID } from 'node:crypto';
 import { execSync } from 'node:child_process';
-import type { EventCategory, EventDetail, EventType } from './types.js';
+import type { AgentType, EventCategory, EventDetail, EventType } from './types.js';
+
+const AGENT_DISPLAY_NAMES: Record<AgentType, string> = {
+  'claude-code': 'Claude Code',
+  'cursor': 'Cursor',
+  'aider': 'Aider',
+  'openclaw': 'OpenClaw',
+  'unknown': 'Unknown Agent',
+};
+
+export function detectAgentType(): AgentType {
+  if (process.env['CLAUDE_CODE_VERSION']) {
+    return 'claude-code';
+  }
+  if (process.env['CURSOR_VERSION']) {
+    return 'cursor';
+  }
+  if (process.env['AIDER_VERSION']) {
+    return 'aider';
+  }
+  if (process.env['OPENCLAW_VERSION']) {
+    return 'openclaw';
+  }
+  return 'unknown';
+}
+
+export function getAgentDisplayName(agentType: AgentType): string {
+  return AGENT_DISPLAY_NAMES[agentType];
+}
+
+export function getAgentVersion(): string | undefined {
+  return (
+    process.env['CLAUDE_CODE_VERSION'] ??
+    process.env['CURSOR_VERSION'] ??
+    process.env['AIDER_VERSION'] ??
+    process.env['OPENCLAW_VERSION']
+  );
+}
 
 export function generateId(): string {
   return randomUUID();

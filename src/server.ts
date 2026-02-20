@@ -11,11 +11,12 @@ import {
   getKnowledgeSchema,
   handleGetKnowledge,
 } from './tools/knowledge.js';
+import { valueMetricsSchema, handleValueMetrics } from './tools/value-metrics.js';
 
 export function createServer(db: Database.Database): McpServer {
   const server = new McpServer({
     name: 'synapse-memory',
-    version: '0.1.0',
+    version: '0.2.0',
   }, {
     capabilities: {
       logging: {},
@@ -77,6 +78,15 @@ export function createServer(db: Database.Database): McpServer {
     'Retrieve promoted project-level knowledge: decisions, patterns, error resolutions, and milestones that persist across sessions.',
     getKnowledgeSchema,
     handleGetKnowledge(db),
+  );
+
+  // --- Value tracking ---
+
+  server.tool(
+    'get_value_metrics',
+    'Get value analytics for a project: sessions tracked, knowledge surfaced, time saved estimates.',
+    valueMetricsSchema,
+    handleValueMetrics(db),
   );
 
   return server;

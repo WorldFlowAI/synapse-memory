@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { Session, SessionMetrics } from '../types.js';
+import type { AgentType, Session, SessionMetrics } from '../types.js';
 
 interface SessionRow {
   session_id: string;
@@ -11,6 +11,8 @@ interface SessionRow {
   summary: string | null;
   git_commit_start: string | null;
   git_commit_end: string | null;
+  agent_type: string;
+  agent_version: string | null;
 }
 
 function rowToSession(row: SessionRow): Session {
@@ -24,6 +26,8 @@ function rowToSession(row: SessionRow): Session {
     summary: row.summary ?? undefined,
     gitCommitStart: row.git_commit_start ?? undefined,
     gitCommitEnd: row.git_commit_end ?? undefined,
+    agentType: row.agent_type as AgentType,
+    agentVersion: row.agent_version ?? undefined,
   };
 }
 
@@ -32,8 +36,8 @@ export function createSession(
   session: Session,
 ): Session {
   db.prepare(`
-    INSERT INTO sessions (session_id, project_path, branch, started_at, status, git_commit_start)
-    VALUES (@session_id, @project_path, @branch, @started_at, @status, @git_commit_start)
+    INSERT INTO sessions (session_id, project_path, branch, started_at, status, git_commit_start, agent_type, agent_version)
+    VALUES (@session_id, @project_path, @branch, @started_at, @status, @git_commit_start, @agent_type, @agent_version)
   `).run({
     session_id: session.sessionId,
     project_path: session.projectPath,
@@ -41,6 +45,8 @@ export function createSession(
     started_at: session.startedAt,
     status: session.status,
     git_commit_start: session.gitCommitStart ?? null,
+    agent_type: session.agentType ?? 'unknown',
+    agent_version: session.agentVersion ?? null,
   });
 
   return session;

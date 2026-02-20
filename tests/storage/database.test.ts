@@ -9,11 +9,18 @@ describe('database', () => {
       .all() as Array<{ name: string }>;
 
     const tableNames = tables.map((t) => t.name);
+    // v1 tables
     expect(tableNames).toContain('sessions');
     expect(tableNames).toContain('session_events');
     expect(tableNames).toContain('schema_version');
+    // v2 tables
     expect(tableNames).toContain('promoted_knowledge');
     expect(tableNames).toContain('synapse_sync_config');
+    // v3 tables
+    expect(tableNames).toContain('agents');
+    expect(tableNames).toContain('file_importance');
+    expect(tableNames).toContain('knowledge_usage');
+    expect(tableNames).toContain('value_metrics');
   });
 
   it('enables WAL mode', () => {
@@ -46,6 +53,13 @@ describe('database', () => {
     expect(indexNames).toContain('idx_knowledge_project');
     expect(indexNames).toContain('idx_knowledge_type');
     expect(indexNames).toContain('idx_knowledge_synced');
+    // v3 indices
+    expect(indexNames).toContain('idx_file_importance_project');
+    expect(indexNames).toContain('idx_file_importance_score');
+    expect(indexNames).toContain('idx_knowledge_usage_knowledge');
+    expect(indexNames).toContain('idx_knowledge_usage_session');
+    expect(indexNames).toContain('idx_knowledge_hash');
+    expect(indexNames).toContain('idx_knowledge_branch');
   });
 
   it('records schema version after migrations', () => {
@@ -54,9 +68,10 @@ describe('database', () => {
       .prepare('SELECT version FROM schema_version ORDER BY version ASC')
       .all() as Array<{ version: number }>;
 
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(rows[0]?.version).toBe(1);
     expect(rows[1]?.version).toBe(2);
+    expect(rows[2]?.version).toBe(3);
   });
 
   it('is idempotent — second createInMemoryDatabase on same db is safe', () => {

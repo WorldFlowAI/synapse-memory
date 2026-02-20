@@ -1,6 +1,6 @@
 {
   "name": "synapse-memory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for Claude Code session intelligence — persistent memory across coding sessions",
   "type": "module",
   "bin": {

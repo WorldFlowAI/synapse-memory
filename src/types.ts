@@ -1,3 +1,27 @@
+// ---------------------------------------------------------------------------
+// Agent identification (multi-tool support)
+// ---------------------------------------------------------------------------
+
+export type AgentType =
+  | 'claude-code'
+  | 'cursor'
+  | 'aider'
+  | 'openclaw'
+  | 'unknown';
+
+export interface AgentInfo {
+  readonly agentType: AgentType;
+  readonly displayName: string;
+  readonly agentVersion?: string;
+  readonly firstSeenAt: string;
+  readonly lastSeenAt: string;
+  readonly totalSessions: number;
+}
+
+// ---------------------------------------------------------------------------
+// Session types
+// ---------------------------------------------------------------------------
+
 export interface Session {
   readonly sessionId: string;
   readonly projectPath: string;
@@ -8,6 +32,8 @@ export interface Session {
   readonly summary?: string;
   readonly gitCommitStart?: string;
   readonly gitCommitEnd?: string;
+  readonly agentType?: AgentType;
+  readonly agentVersion?: string;
 }
 
 export type SessionStatus = 'active' | 'completed' | 'abandoned';
@@ -106,6 +132,8 @@ export interface CreateSessionInput {
   readonly projectPath: string;
   readonly branch?: string;
   readonly gitCommit?: string;
+  readonly agentType?: AgentType;
+  readonly agentVersion?: string;
 }
 
 export interface EndSessionInput {
@@ -164,6 +192,10 @@ export interface PromotedKnowledge {
   readonly createdAt: string;
   readonly syncedAt?: string;
   readonly synapseKnowledgeId?: string;
+  readonly branch?: string;
+  readonly contentHash?: string;
+  readonly usageCount?: number;
+  readonly supersededBy?: string;
 }
 
 /**
@@ -202,4 +234,87 @@ export interface SynapseSessionExport {
   readonly summary?: string;
   readonly startedAt: string;
   readonly endedAt?: string;
+}
+
+// ---------------------------------------------------------------------------
+// v0.2: Value tracking and analytics
+// ---------------------------------------------------------------------------
+
+/**
+ * File importance scoring — tracks which files are most important to a project
+ * based on read/edit frequency and recency.
+ */
+export interface FileImportance {
+  readonly projectPath: string;
+  readonly filePath: string;
+  readonly readCount: number;
+  readonly editCount: number;
+  readonly lastAccessedAt: string;
+  readonly importanceScore: number;
+}
+
+/**
+ * Knowledge usage tracking — records when knowledge is surfaced or recalled,
+ * proving the value synapse-memory provides.
+ */
+export interface KnowledgeUsage {
+  readonly usageId: string;
+  readonly knowledgeId: string;
+  readonly sessionId: string;
+  readonly usageType: 'surfaced' | 'recalled' | 'applied';
+  readonly timestamp: string;
+}
+
+/**
+ * Aggregate value metrics per project — tracks how much value synapse-memory
+ * provides over time.
+ */
+export interface ValueMetrics {
+  readonly projectPath: string;
+  readonly totalSessions: number;
+  readonly contextReuseCount: number;
+  readonly knowledgeSurfacedCount: number;
+  readonly decisionsRecalledCount: number;
+  readonly patternsAppliedCount: number;
+  readonly errorsPreventedCount: number;
+  readonly estimatedTimeSavedSecs: number;
+  readonly updatedAt: string;
+}
+
+/**
+ * Scored knowledge item for ranking in context injection.
+ */
+export interface ScoredKnowledge {
+  readonly knowledge: PromotedKnowledge;
+  readonly relevanceScore: number;
+  readonly branchWeight: number;
+  readonly recencyWeight: number;
+}
+
+/**
+ * Duplicate detection result.
+ */
+export interface DuplicateCandidate {
+  readonly existingKnowledge: PromotedKnowledge;
+  readonly similarityScore: number;
+  readonly matchType: 'exact_hash' | 'title_match';
+}
+
+/**
+ * Context budget configuration for session_start output.
+ */
+export interface ContextBudgetConfig {
+  readonly maxSessions?: number;      // default: 5
+  readonly maxKnowledge?: number;     // default: 15
+  readonly maxFiles?: number;         // default: 10
+}
+
+/**
+ * Time savings estimates per action type (in seconds).
+ */
+export interface TimeSavingsEstimates {
+  readonly knowledgeSurface: number;    // 60 seconds (1 min)
+  readonly decisionRecall: number;      // 180 seconds (3 min)
+  readonly patternApplied: number;      // 300 seconds (5 min)
+  readonly errorPrevented: number;      // 900 seconds (15 min)
 }

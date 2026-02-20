@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type Database from 'better-sqlite3';
 import { insertEvent } from '../storage/events.js';
 import { getSession } from '../storage/sessions.js';
+import { upsertFileAccess } from '../storage/file-importance.js';
 import { generateId, nowISO, categorizeEvent, deriveEventType } from '../utils.js';
 import type { EventDetail, SessionEvent } from '../types.js';
 
@@ -100,6 +101,12 @@ export function handleRecordEvent(db: Database.Database) {
       };
 
       insertEvent(db, event);
+
+      // Track file importance for file operations
+      if (detail.type === 'file_op') {
+        const operation = detail.operation === 'read' ? 'read' : 'edit';
+        upsertFileAccess(db, session.projectPath, detail.path, operation);
+      }
 
       return {
         content: [{
