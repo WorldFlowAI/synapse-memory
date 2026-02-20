@@ -452,4 +452,6 @@ synapse-memory is the local-first entry point to [Synapse](https://github.com/Wo
 
 ## License
 
-[MIT](LICENSE)
+[MIT with Commons Clause](LICENSE)
+
+You're free to use, modify, and distribute synapse-memory for any purpose, including commercial use within your organization. The Commons Clause restricts selling synapse-memory as a hosted service that competes with WorldFlow AI's offerings.

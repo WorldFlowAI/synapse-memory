@@ -27,7 +27,7 @@
     "developer-tools"
   ],
   "author": "WorldFlow AI",
-  "license": "MIT",
+  "license": "MIT WITH Commons-Clause",
   "repository": {
     "type": "git",
     "url": "https://github.com/WorldFlowAI/synapse-memory.git"
